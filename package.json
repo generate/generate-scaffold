@@ -1,0 +1,40 @@
+{
+  "name": "generate-scaffold",
+  "description": "Generate a scaffold from a declarative configuration.",
+  "version": "0.1.0",
+  "homepage": "https://github.com/generate/generate-scaffold",
+  "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
+  "repository": "generate/generate-scaffold",
+  "bugs": {
+    "url": "https://github.com/generate/generate-scaffold/issues"
+  },
+  "license": "MIT",
+  "files": [
+    "index.js"
+  ],
+  "main": "index.js",
+  "engines": {
+    "node": ">=0.10.0"
+  },
+  "scripts": {
+    "test": "mocha"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "gulp-format-md": "*",
+    "mocha": "^2.5.3"
+  },
+  "keywords": [],
+  "verb": {
+    "layout": "default",
+    "plugins": [
+      "gulp-format-md"
+    ],
+    "related": {
+      "list": []
+    },
+    "reflinks": [
+      "verb"
+    ]
+  }
+}

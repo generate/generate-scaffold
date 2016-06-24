@@ -7,16 +7,134 @@
 
 'use strict';
 
-var debug = require('debug')('generate-scaffold');
+var debug = require('debug')('generate:scaffold');
+var isValid = require('is-valid-app');
+var isScaffold = require('is-scaffold');
+var define = require('define-property');
+var extend = require('extend-shallow');
+var Scaffold = require('scaffold');
+var isObject = require('isobject');
+var forOwn = require('for-own');
 
-module.exports = function(config) {
-  return function(app) {
-    if (this.isRegistered('generate-scaffold')) return;
-    debug('initializing "%s", from "%s"', __filename, module.parent.id);
+module.exports = function(app) {
+  if (!isValid(app, 'generate-scaffold')) return;
 
-    this.define('scaffold', function() {
-      debug('running scaffold');
-      
-    });
-  };
+  this.use(require('base-scaffold')());
+  this.set('Scaffold', this.options.Scaffold || Scaffold);
+  this.scaffolds = this.scaffolds || {};
+
+  this.define('isScaffold', isScaffold);
+
+  /**
+   * Generate a scaffold from the given `config`.
+   *
+   * @name .scaffold
+   * @param {String} `name`
+   * @param {Object} `config`
+   * @return {Object} Returns the `Assemble` instance for chaining
+   * @api public
+   */
+
+  this.define('scaffold', function(name, config, cb) {
+    var Scaffold = this.get('Scaffold');
+    if (this.isScaffold(name)) {
+      var args = [].slice.call(arguments, 1);
+      decorate(this, name);
+      return name.generate.apply(name, args);
+    }
+
+    if (typeof name === 'string' && typeof config !== 'function' && !cb) {
+      if (!this.scaffolds.hasOwnProperty(name)) {
+        this.addScaffold(name, config);
+        return this;
+      }
+      return this.getScaffold(name, config);
+    }
+
+    // config is a function
+    if (typeof config === 'function' && typeof cb === 'undefined') {
+      // register a scaffold function to be lazily invoked
+      if (!this.scaffolds.hasOwnProperty(name)) {
+        this.addScaffold(name, config);
+        return this;
+      }
+
+      // config is a callback, `name` is an existing scaffold
+      cb = config;
+      config = this.getScaffold(name);
+      config.generate(cb);
+      return;
+    }
+
+    if (isObject(config) && typeof cb === 'function') {
+      config = this.getScaffold(name, config);
+      config.generate(cb);
+      return;
+    }
+    this.addScaffold(name, config);
+    return this;
+  });
+
+  this.define('addScaffold', function(name, scaffold) {
+    this.scaffolds[name] = scaffold;
+    this.emit('scaffold', name, scaffold);
+    return this;
+  });
+
+  /**
+   *
+   */
+
+  this.define('getScaffold', function(config, options) {
+    var self = this;
+    if (typeof config === 'string') {
+      config = this.scaffolds[config];
+    }
+    if (typeof config === 'function') {
+      config = config(extend({}, this.options, options));
+    }
+    if (!isObject(config)) {
+      throw new TypeError('expected config to be an object');
+    }
+    if (!this.isScaffold(config)) {
+      var scaffold = new Scaffold();
+      scaffold.on('target', function(target) {
+        self.emit('target', target.name, target);
+      });
+      config = scaffold.addTargets(config);
+    } else {
+      forOwn(config.targets, function(target, key) {
+        self.emit('target', key, target);
+      });
+    }
+    decorate(this, config);
+    return config;
+  });
 };
+
+function decorate(app, scaffold) {
+  if (typeof scaffold.generate === 'function') return;
+
+  define(scaffold, 'generate', function(options, cb) {
+    if (typeof options === 'function') {
+      cb = options;
+      options = {};
+    }
+    if (typeof cb === 'function') {
+      return this.generateSeries.apply(this, arguments);
+    }
+    return this.generateStream.apply(this, arguments);
+  });
+
+  define(scaffold, 'generateSeries', function(options, cb) {
+    var args = [].slice.call(arguments);
+    args.unshift(this);
+    return app.scaffoldSeries.apply(app, args);
+  });
+
+  define(scaffold, 'generateStream', function() {
+    var args = [].slice.call(arguments);
+    args.unshift(this);
+    return app.scaffoldStream.apply(app, args);
+  });
+}

@@ -8,22 +8,20 @@
 'use strict';
 
 var debug = require('debug')('generate:scaffold');
-var isValid = require('is-valid-app');
-var isScaffold = require('is-scaffold');
-var define = require('define-property');
-var extend = require('extend-shallow');
-var Scaffold = require('scaffold');
-var isObject = require('isobject');
-var forOwn = require('for-own');
+var utils = require('./utils');
 
 module.exports = function(app) {
-  if (!isValid(app, 'generate-scaffold')) return;
+  if (!utils.isValid(app, 'generate-scaffold')) return;
 
   this.use(require('base-scaffold')());
-  this.set('Scaffold', this.options.Scaffold || Scaffold);
+  this.set('Scaffold', this.options.Scaffold || utils.Scaffold);
   this.scaffolds = this.scaffolds || {};
 
-  this.define('isScaffold', isScaffold);
+  /**
+   * Returns true
+   */
+
+  this.define('isScaffold', utils.isScaffold);
 
   /**
    * Generate a scaffold from the given `config`.
@@ -36,7 +34,8 @@ module.exports = function(app) {
    */
 
   this.define('scaffold', function(name, config, cb) {
-    var Scaffold = this.get('Scaffold');
+    debug('scaffold <%s>, %j', name, config);
+
     if (this.isScaffold(name)) {
       var args = [].slice.call(arguments, 1);
       decorate(this, name);
@@ -66,7 +65,7 @@ module.exports = function(app) {
       return;
     }
 
-    if (isObject(config) && typeof cb === 'function') {
+    if (utils.isObject(config) && typeof cb === 'function') {
       config = this.getScaffold(name, config);
       config.generate(cb);
       return;
@@ -76,46 +75,56 @@ module.exports = function(app) {
   });
 
   this.define('addScaffold', function(name, scaffold) {
+    debug('addScaffold', name);
     this.scaffolds[name] = scaffold;
     this.emit('scaffold', name, scaffold);
     return this;
   });
 
-  /**
-   *
-   */
-
   this.define('getScaffold', function(config, options) {
     var self = this;
+
     if (typeof config === 'string') {
-      config = this.scaffolds[config];
+      var name = config;
+      config = this.scaffolds[name];
     }
+
     if (typeof config === 'function') {
-      config = config(extend({}, this.options, options));
+      config = config(utils.extend({}, this.options, options));
     }
-    if (!isObject(config)) {
+
+    if (!utils.isObject(config)) {
       throw new TypeError('expected config to be an object');
     }
+
     if (!this.isScaffold(config)) {
+      var Scaffold = this.get('Scaffold');
       var scaffold = new Scaffold();
+
       scaffold.on('target', function(target) {
         self.emit('target', target.name, target);
       });
+
       config = scaffold.addTargets(config);
     } else {
-      forOwn(config.targets, function(target, key) {
+      utils.forOwn(config.targets, function(target, key) {
         self.emit('target', key, target);
       });
     }
+
     decorate(this, config);
     return config;
   });
 };
 
+/**
+ * Decorate the given scaffold with "generate" methods
+ */
+
 function decorate(app, scaffold) {
   if (typeof scaffold.generate === 'function') return;
 
-  define(scaffold, 'generate', function(options, cb) {
+  scaffold.define('generate', function(options, cb) {
     if (typeof options === 'function') {
       cb = options;
       options = {};
@@ -126,13 +135,13 @@ function decorate(app, scaffold) {
     return this.generateStream.apply(this, arguments);
   });
 
-  define(scaffold, 'generateSeries', function(options, cb) {
+  scaffold.define('generateSeries', function(options, cb) {
     var args = [].slice.call(arguments);
     args.unshift(this);
     return app.scaffoldSeries.apply(app, args);
   });
 
-  define(scaffold, 'generateStream', function() {
+  scaffold.define('generateStream', function() {
     var args = [].slice.call(arguments);
     args.unshift(this);
     return app.scaffoldStream.apply(app, args);

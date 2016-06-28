@@ -84,7 +84,7 @@ module.exports = function(config) {
           return this.scaffoldStream(config, options);
         }
 
-        var scaffold = this.getScaffold(config);
+        var scaffold = this.getScaffold(config, options);
         this.run(scaffold);
         var targets = scaffold.targets;
         var keys = Object.keys(targets);
@@ -127,14 +127,15 @@ module.exports = function(config) {
        *   });
        * ```
        * @name .scaffoldStream
-       * @param {Object} `scaffold` [scaffold][] configuration object.
+       * @param {Object} `config` [scaffold][] configuration object.
        * @return {Stream} returns a stream with all processed files.
        * @api public
        */
 
-      scaffoldStream: function(scaffold, options, cb) {
+      scaffoldStream: function(config, options, cb) {
         var streams = [];
 
+        var scaffold = this.getScaffold(config, options);
         this.run(scaffold);
         var targets = scaffold.targets;
         for (var name in targets) {

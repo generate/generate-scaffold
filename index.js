@@ -10,111 +10,152 @@
 var debug = require('debug')('generate:scaffold');
 var utils = require('./utils');
 
-module.exports = function(app) {
-  if (!utils.isValid(app, 'generate-scaffold')) return;
+module.exports = function(config) {
+  config = config || {};
 
-  this.use(require('base-scaffold')());
-  this.set('Scaffold', this.options.Scaffold || utils.Scaffold);
-  this.scaffolds = this.scaffolds || {};
-
-  /**
-   * Returns true
-   */
-
-  this.define('isScaffold', utils.isScaffold);
-
-  /**
-   * Generate a scaffold from the given `config`.
-   *
-   * @name .scaffold
-   * @param {String} `name`
-   * @param {Object} `config`
-   * @return {Object} Returns the `Assemble` instance for chaining
-   * @api public
-   */
-
-  this.define('scaffold', function(name, config, cb) {
-    debug('scaffold <%s>, %j', name, config);
-
-    if (this.isScaffold(name)) {
-      var args = [].slice.call(arguments, 1);
-      decorate(this, name);
-      return name.generate.apply(name, args);
-    }
-
-    if (typeof name === 'string' && typeof config !== 'function' && !cb) {
-      if (!this.scaffolds.hasOwnProperty(name)) {
-        this.addScaffold(name, config);
-        return this;
-      }
-      return this.getScaffold(name, config);
-    }
-
-    // config is a function
-    if (typeof config === 'function' && typeof cb === 'undefined') {
-      // register a scaffold function to be lazily invoked
-      if (!this.scaffolds.hasOwnProperty(name)) {
-        this.addScaffold(name, config);
-        return this;
-      }
-
-      // config is a callback, `name` is an existing scaffold
-      cb = config;
-      config = this.getScaffold(name);
-      config.generate(cb);
-      return;
-    }
-
-    if (utils.isObject(config) && typeof cb === 'function') {
-      config = this.getScaffold(name, config);
-      config.generate(cb);
-      return;
-    }
-    this.addScaffold(name, config);
-    return this;
-  });
-
-  this.define('addScaffold', function(name, scaffold) {
-    debug('addScaffold', name);
-    this.scaffolds[name] = scaffold;
-    this.emit('scaffold', name, scaffold);
-    return this;
-  });
-
-  this.define('getScaffold', function(config, options) {
+  return function fn(app) {
+    if (!utils.isValid(this, 'generate-scaffold')) return;
     var self = this;
 
-    if (typeof config === 'string') {
-      var name = config;
-      config = this.scaffolds[name];
-    }
+    /**
+     * Register the `base-scaffold` plugin
+     */
 
-    if (typeof config === 'function') {
-      config = config(utils.extend({}, this.options, options));
-    }
+    this.use(utils.scaffold(config));
 
-    if (!utils.isObject(config)) {
-      throw new TypeError('expected config to be an object');
-    }
+    /**
+     * Register the `base-files-each` plugin
+     */
 
-    if (!this.isScaffold(config)) {
-      var Scaffold = this.get('Scaffold');
-      var scaffold = new Scaffold();
+    this.use(utils.each());
 
-      scaffold.on('target', function(target) {
-        self.emit('target', target.name, target);
+    /**
+     * Listen for scaffolds and create tasks for the targets on each scaffold
+     */
+
+    this.on('scaffold', function(scaffold) {
+      decorate(self, scaffold);
+
+      self.register(scaffold.name, function(gen) {
+        var keys = Object.keys(scaffold.targets);
+        keys.forEach(function(key) {
+          gen.task(key, function(cb) {
+            self.each(scaffold.targets[key], cb);
+          });
+        });
+        gen.task('default', keys);
       });
+    });
 
-      config = scaffold.addTargets(config);
-    } else {
-      utils.forOwn(config.targets, function(target, key) {
-        self.emit('target', key, target);
-      });
-    }
+    this.define({
 
-    decorate(this, config);
-    return config;
-  });
+      /**
+       * Asynchronously generate files from a declarative [scaffold][] configuration.
+       *
+       * ```js
+       * var Scaffold = require('scaffold');
+       * var scaffold = new Scaffold({
+       *   options: {cwd: 'source'},
+       *   posts: {
+       *     src: ['content/*.md']
+       *   },
+       *   pages: {
+       *     src: ['templates/*.hbs']
+       *   }
+       * });
+       *
+       * app.scaffoldSeries(scaffold, function(err) {
+       *   if (err) console.log(err);
+       * });
+       * ```
+       * @name .scaffoldSeries
+       * @param {Object} `scaffold` Scaffold configuration object.
+       * @param {Function} `cb` Optional callback function. If not passed, `.scaffoldStream` will be called and a stream will be returned.
+       * @api public
+       */
+
+      scaffoldSeries: function(config, options, cb) {
+        if (typeof options === 'function') {
+          cb = options;
+          options = {};
+        }
+
+        if (typeof cb !== 'function') {
+          return this.scaffoldStream(config, options);
+        }
+
+        var scaffold = this.getScaffold(config);
+        this.run(scaffold);
+        var targets = scaffold.targets;
+        var keys = Object.keys(targets);
+
+        utils.eachSeries(keys, function(key, next) {
+          if (!targets.hasOwnProperty(key)) {
+            next();
+            return;
+          }
+
+          var target = targets[key];
+          scaffold.run(target);
+          if (!target.files) {
+            next();
+            return;
+          }
+          this.each(target, options, next);
+        }.bind(this), cb);
+      },
+
+      /**
+       * Generate files from a declarative [scaffold][] configuration.
+       *
+       * ```js
+       * var Scaffold = require('scaffold');
+       * var scaffold = new Scaffold({
+       *   options: {cwd: 'source'},
+       *   posts: {
+       *     src: ['content/*.md']
+       *   },
+       *   pages: {
+       *     src: ['templates/*.hbs']
+       *   }
+       * });
+       *
+       * app.scaffoldStream(scaffold)
+       *   .on('error', console.error)
+       *   .on('end', function() {
+       *     console.log('done!');
+       *   });
+       * ```
+       * @name .scaffoldStream
+       * @param {Object} `scaffold` [scaffold][] configuration object.
+       * @return {Stream} returns a stream with all processed files.
+       * @api public
+       */
+
+      scaffoldStream: function(scaffold, options, cb) {
+        var streams = [];
+
+        this.run(scaffold);
+        var targets = scaffold.targets;
+        for (var name in targets) {
+          if (targets.hasOwnProperty(name)) {
+            var target = targets[name];
+            scaffold.run(target);
+
+            if (target.files) {
+              streams.push(this.eachStream(target, options));
+            }
+          }
+        }
+
+        var stream = utils.ms.apply(utils.ms, streams);
+        stream.on('finish', stream.emit.bind(stream, 'end'));
+        return stream;
+      }
+    });
+
+    return fn;
+  }
 };
 
 /**

@@ -30,7 +30,7 @@ function base(cb) {
 describe('generate', function() {
   beforeEach(function() {
     app = new App();
-    app.use(plugin);
+    app.use(plugin());
   });
 
   afterEach(function(cb) {
@@ -148,7 +148,7 @@ describe('generate', function() {
 
       app.options.src = fixtures;
       var scaffold = app.scaffold('site');
-      app.scaffold(scaffold, function(err) {
+      scaffold.generate(function(err) {
         if (err) return cb(err);
         assert(exists(dest('b.txt')));
         cb();
@@ -167,7 +167,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold('site', {src: fixtures}, function(err) {
+      var scaffold = app.getScaffold('site', {src: fixtures});
+      scaffold.generate(function(err) {
         if (err) return cb(err);
         assert(exists(dest('b.txt')));
         cb();
@@ -186,8 +187,7 @@ describe('generate', function() {
         }
       });
 
-      // app.options.src = fixtures;
-      app.scaffold('site', {src: fixtures})
+      app.getScaffold('site', {src: fixtures})
         .generate()
         .on('error', cb)
         .on('end', function() {
@@ -208,7 +208,7 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold('site', {src: fixtures})
+      app.getScaffold('site', {src: fixtures})
         .generate(function(err) {
           if (err) return cb(err);
           assert(exists(dest('b.txt')));
@@ -229,7 +229,7 @@ describe('generate', function() {
       });
 
       eachSeries(['b.txt', 'a.txt'], function(src, next) {
-        app.scaffold('site', {src: src})
+        app.getScaffold('site', {src: src})
           .generate(function(err) {
             if (err) return next(err);
             assert(exists(dest(src)));
@@ -250,7 +250,7 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold('site', {src: ['b.txt', 'a.txt']})
+      app.getScaffold('site', {src: ['b.txt', 'a.txt']})
         .generate(function(err) {
           if (err) return cb(err);
           assert(exists(dest('b.txt')));
@@ -273,11 +273,12 @@ describe('generate', function() {
 
       scaffold = new Scaffold(config);
 
-      app.scaffold(scaffold, function(err) {
-        if (err) return cb(err);
-        assert(exists(dest('b.txt')));
-        cb();
-      });
+      app.scaffold('test', scaffold)
+        .generate(function(err) {
+          if (err) return cb(err);
+          assert(exists(dest('b.txt')));
+          cb();
+        });
     });
 
     it('should use the cwd passed on the config.options.cwd', function(cb) {
@@ -291,7 +292,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('b.txt')));
@@ -308,7 +310,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('b.txt')));
@@ -327,7 +330,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('a.txt')));
@@ -348,7 +352,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('a.txt')));
@@ -362,7 +367,7 @@ describe('generate', function() {
   describe('scaffold plugins', function() {
     beforeEach(function() {
       app = new App();
-      app.use(plugin);
+      app.use(plugin());
     });
 
     it('should use a plugin to modify file contents', function(cb) {
@@ -382,7 +387,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold(scaffold, {suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();
@@ -416,7 +422,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold(scaffold, {suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();
@@ -450,7 +457,8 @@ describe('generate', function() {
         }
       });
 
-      app.scaffold(scaffold, {pipeline: ['a', 'c'], suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({pipeline: ['a', 'c'], suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();

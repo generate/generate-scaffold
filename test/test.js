@@ -29,7 +29,7 @@ function base(cb) {
 describe('scaffolds', function() {
   beforeEach(function() {
     app = new App();
-    app.use(plugin);
+    app.use(plugin());
   });
 
   afterEach(function(cb) {
@@ -54,7 +54,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, function(err) {
+      app.scaffold('test', scaffold)
+        .generate(function(err) {
         if (err) return cb(err);
         assert(exists(dest('b.txt')));
         cb();
@@ -72,7 +73,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('b.txt')));
@@ -89,7 +91,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('b.txt')));
@@ -108,7 +111,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('a.txt')));
@@ -129,7 +133,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists(dest('a.txt')));
@@ -143,7 +148,7 @@ describe('scaffolds', function() {
   describe('plugin', function() {
     beforeEach(function() {
       app = new App();
-      app.use(plugin);
+      app.use(plugin());
     });
 
     it('should use a plugin to modify file contents', function(cb) {
@@ -163,7 +168,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, {suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();
@@ -197,7 +203,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, {suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();
@@ -231,7 +238,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, {pipeline: ['a', 'c'], suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({pipeline: ['a', 'c'], suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();

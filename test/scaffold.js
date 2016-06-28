@@ -7,7 +7,7 @@ var assert = require('assert');
 var rimraf = require('rimraf');
 var through = require('through2');
 var Scaffold = require('scaffold');
-var plugin = require('./')
+var plugin = require('../')
 var App = require('base-app');
 var app, scaffold;
 
@@ -61,11 +61,12 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, function(err) {
-        if (err) return cb(err);
-        assert(exists('b.txt'));
-        cb();
-      });
+      app.scaffold('test', scaffold)
+        .generate(function(err) {
+          if (err) return cb(err);
+          assert(exists('b.txt'));
+          cb();
+        });
     });
 
     it('should use the cwd passed on the config.options.cwd', function(cb) {
@@ -79,7 +80,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists('b.txt'));
@@ -96,7 +98,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists('b.txt'));
@@ -115,7 +118,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists('a.txt'));
@@ -136,7 +140,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold)
+      app.scaffold('test', scaffold)
+        .generate()
         .on('error', cb)
         .on('end', function() {
           assert(exists('a.txt'));
@@ -171,7 +176,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, {suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();
@@ -205,7 +211,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, {suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();
@@ -239,7 +246,8 @@ describe('scaffolds', function() {
         }
       });
 
-      app.scaffold(scaffold, {pipeline: ['a', 'c'], suffix: 'zzz'})
+      app.scaffold('test', scaffold)
+        .generate({pipeline: ['a', 'c'], suffix: 'zzz'})
         .on('error', cb)
         .on('data', function(data) {
           var str = data.contents.toString();

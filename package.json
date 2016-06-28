@@ -74,15 +74,21 @@
     "yo"
   ],
   "verb": {
+    "toc": false,
     "layout": "default",
+    "tasks": [
+      "readme"
+    ],
     "plugins": [
       "gulp-format-md"
     ],
-    "related": {
-      "list": []
-    },
     "reflinks": [
-      "verb"
-    ]
+      "verb",
+      "scaffold",
+      "verb-readme-generator"
+    ],
+    "lint": {
+      "reflinks": true
+    }
   }
 }

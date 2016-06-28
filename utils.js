@@ -9,12 +9,10 @@ require = utils;
  */
 
 require('base-scaffold', 'scaffold');
-require('extend-shallow', 'extend');
-require('for-own');
-require('is-scaffold');
+require('async-each-series', 'eachSeries');
+require('base-files-each', 'each');
 require('is-valid-app', 'isValid');
-require('isobject', 'isObject');
-require('scaffold', 'Scaffold');
+require('merge-stream', 'ms');
 require = fn;
 
 /**

@@ -36,15 +36,79 @@ module.exports = function(config) {
     this.on('scaffold', function(scaffold) {
       decorate(self, scaffold);
 
-      self.register(scaffold.name, function(gen) {
-        var keys = Object.keys(scaffold.targets);
-        keys.forEach(function(key) {
-          gen.task(key, function(cb) {
-            self.each(scaffold.targets[key], cb);
-          });
-        });
-        gen.task('default', keys);
+    //   self.register(scaffold.name, function(gen) {
+    //     var keys = Object.keys(scaffold.targets);
+    //     keys.forEach(function(key) {
+    //       gen.task(key, function(cb) {
+    //         self.each(scaffold.targets[key], cb);
+    //       });
+    //     });
+    //     gen.task('default', keys);
+    //   });
+    });
+
+    // this.on('scaffold', function(scaffold) {
+    //   decorate(self, scaffold);
+
+    //   if (scaffold.name) {
+    //     self.register(scaffold.name, function(gen) {
+    //       var keys = Object.keys(scaffold.targets);
+    //       keys.forEach(function(key) {
+    //         gen.task(key, function(cb) {
+    //           self.each(scaffold.targets[key], cb);
+    //         });
+    //       });
+    //       gen.task('default', keys);
+    //     });
+    //   } else {
+    //     var keys = Object.keys(scaffold.targets);
+    //     if (keys.length) {
+    //       keys.forEach(function(key) {
+    //         self.task(key, function(cb) {
+    //           self.each(scaffold.targets[key], cb);
+    //         });
+    //       });
+    //       self.task('default', keys);
+    //     }
+    //   }
+    // });
+
+    this.on('target', function fn(target) {
+      var scaffold = target.parent || self;
+      self.generator('scaffold', function(s) {
+
       });
+
+      if (utils.isScaffold(scaffold) && scaffold.name) {
+        var gen = self.findGenerator(scaffold.name);
+        if (typeof gen !== 'undefined') {
+          gen.task(target.name, function(cb) {
+            self.each(target, cb);
+          });
+        } else {
+          gen = self.generator(scaffold.name, function(gen) {
+            this.task(target.name, function(cb) {
+              self.each(target, cb);
+            });
+          });
+        }
+
+        var tasks = Object.keys(gen.tasks).filter(function(task) {
+          return task !== 'default';
+        });
+
+        gen.task('default', tasks);
+      } else if (target.name) {
+        self.task(target.name, function(cb) {
+          self.each(target, cb);
+        });
+
+        var tasks = Object.keys(self.tasks).filter(function(task) {
+          return task !== 'default';
+        });
+
+        self.task('default', tasks);
+      }
     });
 
     this.define({
@@ -86,21 +150,18 @@ module.exports = function(config) {
 
         var scaffold = this.getScaffold(config, options);
         this.run(scaffold);
+        this.emit('generate.scaffold', scaffold, options);
         var targets = scaffold.targets;
         var keys = Object.keys(targets);
 
         utils.eachSeries(keys, function(key, next) {
-          if (!targets.hasOwnProperty(key)) {
-            next();
-            return;
-          }
-
           var target = targets[key];
           scaffold.run(target);
           if (!target.files) {
             next();
             return;
           }
+          this.emit('generate.target', target, options);
           this.each(target, options, next);
         }.bind(this), cb);
       },
@@ -133,17 +194,20 @@ module.exports = function(config) {
        */
 
       scaffoldStream: function(config, options, cb) {
+        var scaffold = this.getScaffold(config, options);
         var streams = [];
 
-        var scaffold = this.getScaffold(config, options);
         this.run(scaffold);
+        this.emit('generate.scaffold', scaffold, options);
         var targets = scaffold.targets;
+
         for (var name in targets) {
           if (targets.hasOwnProperty(name)) {
             var target = targets[name];
             scaffold.run(target);
 
             if (target.files) {
+              this.emit('generate.target', target, options);
               streams.push(this.eachStream(target, options));
             }
           }

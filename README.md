@@ -122,6 +122,16 @@ app.scaffoldStream(scaffold)
   });
 ```
 
+## History
+
+**v0.2.1 (2016-07-11)**
+
+* Ensure that tasks and generators are created correctly by listener
+
+**v0.2.0 (2016-06-27)**
+
+* Adds support for automatically creating generators and tasks from declarative scaffolds. Collaborative work from @doowb and @jonschlinkert
+
 ## About
 
 ### Related projects

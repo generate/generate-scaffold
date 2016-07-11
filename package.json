@@ -10,7 +10,10 @@
   },
   "license": "MIT",
   "files": [
+    "generator.js",
     "index.js",
+    "LICENSE",
+    "README.md",
     "utils.js"
   ],
   "main": "index.js",
@@ -24,9 +27,7 @@
     "async-each-series": "^1.1.0",
     "base-files-each": "^0.1.4",
     "base-scaffold": "^0.3.1",
-    "component-emitter": "^1.2.1",
     "debug": "^2.2.0",
-    "extend-shallow": "^2.0.1",
     "for-own": "^0.1.4",
     "is-scaffold": "^0.1.1",
     "is-valid-app": "^0.2.0",
@@ -58,6 +59,9 @@
     "front",
     "frontend",
     "generate",
+    "generate-generator",
+    "generate-plugin",
+    "generategenerator",
     "generateplugin",
     "generator",
     "init",
@@ -87,8 +91,8 @@
       "gulp-format-md"
     ],
     "reflinks": [
-      "verb",
       "scaffold",
+      "verb",
       "verb-readme-generator"
     ],
     "lint": {

@@ -30,86 +30,60 @@ module.exports = function(config) {
     this.use(utils.each());
 
     /**
-     * Listen for scaffolds and create tasks for the targets on each scaffold
+     * Decorate scaffolds with methods for generating files
      */
 
-    this.on('scaffold', function(scaffold) {
-      decorate(self, scaffold);
-
-    //   self.register(scaffold.name, function(gen) {
-    //     var keys = Object.keys(scaffold.targets);
-    //     keys.forEach(function(key) {
-    //       gen.task(key, function(cb) {
-    //         self.each(scaffold.targets[key], cb);
-    //       });
-    //     });
-    //     gen.task('default', keys);
-    //   });
-    });
-
-    // this.on('scaffold', function(scaffold) {
-    //   decorate(self, scaffold);
-
-    //   if (scaffold.name) {
-    //     self.register(scaffold.name, function(gen) {
-    //       var keys = Object.keys(scaffold.targets);
-    //       keys.forEach(function(key) {
-    //         gen.task(key, function(cb) {
-    //           self.each(scaffold.targets[key], cb);
-    //         });
-    //       });
-    //       gen.task('default', keys);
-    //     });
-    //   } else {
-    //     var keys = Object.keys(scaffold.targets);
-    //     if (keys.length) {
-    //       keys.forEach(function(key) {
-    //         self.task(key, function(cb) {
-    //           self.each(scaffold.targets[key], cb);
-    //         });
-    //       });
-    //       self.task('default', keys);
-    //     }
-    //   }
-    // });
-
-    this.on('target', function fn(target) {
-      var scaffold = target.parent || self;
-      self.generator('scaffold', function(s) {
-
+    if (config.tasks !== false) {
+      this.on('scaffold', function(scaffold) {
+        decorate(self, scaffold);
       });
 
-      if (utils.isScaffold(scaffold) && scaffold.name) {
-        var gen = self.findGenerator(scaffold.name);
-        if (typeof gen !== 'undefined') {
-          gen.task(target.name, function(cb) {
-            self.each(target, cb);
-          });
-        } else {
-          gen = self.generator(scaffold.name, function(gen) {
-            this.task(target.name, function(cb) {
+      /**
+       * Listen for targets to create tasks and generators
+       */
+
+      this.on('target', function(target) {
+        var scaffold = target.parent || self;
+        var tasks = [];
+
+        if (this.Scaffold.isScaffold(scaffold) && scaffold.name) {
+          var gen = self.getGenerator(scaffold.name);
+          if (typeof gen !== 'undefined') {
+            gen.task(target.name, function(cb) {
               self.each(target, cb);
             });
+          } else {
+            self.generator(scaffold.name, function() {
+              this.task(target.name, function(cb) {
+                self.each(target, cb);
+              });
+            });
+            gen = self.generators[scaffold.name];
+          }
+
+          if (gen) {
+            tasks = Object.keys(gen.tasks).filter(function(task) {
+              return task !== 'default';
+            });
+            gen.task('default', tasks);
+          }
+        } else if (target.name) {
+          self.task(target.name, function(cb) {
+            self.each(target, cb);
           });
+
+          tasks = Object.keys(self.tasks).filter(function(task) {
+            return task !== 'default';
+          });
+
+          self.task('default', tasks);
         }
+      });
+    }
 
-        var tasks = Object.keys(gen.tasks).filter(function(task) {
-          return task !== 'default';
-        });
-
-        gen.task('default', tasks);
-      } else if (target.name) {
-        self.task(target.name, function(cb) {
-          self.each(target, cb);
-        });
-
-        var tasks = Object.keys(self.tasks).filter(function(task) {
-          return task !== 'default';
-        });
-
-        self.task('default', tasks);
-      }
-    });
+    /**
+     * Add methods
+     */
 
     this.define({
 
@@ -139,6 +113,8 @@ module.exports = function(config) {
        */
 
       scaffoldSeries: function(config, options, cb) {
+        debug('scaffoldSeries', config);
+
         if (typeof options === 'function') {
           cb = options;
           options = {};
@@ -194,6 +170,7 @@ module.exports = function(config) {
        */
 
       scaffoldStream: function(config, options, cb) {
+        debug('scaffoldStream', config);
         var scaffold = this.getScaffold(config, options);
         var streams = [];
 
@@ -220,7 +197,7 @@ module.exports = function(config) {
     });
 
     return fn;
-  }
+  };
 };
 
 /**

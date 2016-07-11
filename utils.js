@@ -11,6 +11,7 @@ require = utils;
 require('base-scaffold', 'scaffold');
 require('async-each-series', 'eachSeries');
 require('base-files-each', 'each');
+require('is-scaffold');
 require('is-valid-app', 'isValid');
 require('merge-stream', 'ms');
 require = fn;

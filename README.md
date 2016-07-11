@@ -64,7 +64,7 @@ See the [scaffold](https://github.com/jonschlinkert/scaffold) library for additi
 
 ## API
 
-### [.scaffoldSeries](index.js#L114)
+### [.scaffoldSeries](index.js#L115)
 
 Asynchronously generate files from a declarative [scaffold](https://github.com/jonschlinkert/scaffold) configuration.
 
@@ -92,7 +92,7 @@ app.scaffoldSeries(scaffold, function(err) {
 });
 ```
 
-### [.scaffoldStream](index.js#L171)
+### [.scaffoldStream](index.js#L172)
 
 Generate files from a declarative [scaffold](https://github.com/jonschlinkert/scaffold) configuration.
 

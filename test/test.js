@@ -29,7 +29,7 @@ function base(cb) {
 describe('scaffolds', function() {
   beforeEach(function() {
     app = new App();
-    app.use(plugin());
+    app.use(plugin);
   });
 
   afterEach(function(cb) {
@@ -148,7 +148,7 @@ describe('scaffolds', function() {
   describe('plugin', function() {
     beforeEach(function() {
       app = new App();
-      app.use(plugin());
+      app.use(plugin);
     });
 
     it('should use a plugin to modify file contents', function(cb) {

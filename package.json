@@ -93,10 +93,15 @@
     "reflinks": [
       "scaffold",
       "verb",
-      "verb-readme-generator"
+      "verb-readme-generator",
+      "generate",
+      "verb-generate-readme"
     ],
     "lint": {
       "reflinks": true
+    },
+    "related": {
+      "list": []
     }
   }
 }

@@ -19,11 +19,12 @@ var scaffolds = require('generate-scaffold');
 ## Example
 
 ```js
+var scaffolds = require('generate-scaffold');
 var generate = require('generate');
 var Scaffold = require('scaffold');
 var scaffold = new Scaffold();
 var app = generate();
-app.use(scaffolds());
+app.use(scaffolds);
 
 /**
  * Add a basic "target" to our scaffold. Scaffolds are like
@@ -124,11 +125,21 @@ app.scaffoldStream(scaffold)
 
 ## History
 
-**v0.2.1 (2016-07-11)**
+### v0.3.0 (2016-07-11)
+
+**Breaking changes**
+
+* Changes signature of the main export to follow [Generate](https://github.com/generate/generate) generator conventions. Instead of doing `app.use(scaffold())`, you should now do `app.use(scaffold)`.
+
+### v0.2.1 (2016-07-11)
+
+**Fixed**
 
 * Ensure that tasks and generators are created correctly by listener
 
-**v0.2.0 (2016-06-27)**
+### v0.2.0 (2016-06-27)
+
+**Added**
 
 * Adds support for automatically creating generators and tasks from declarative scaffolds. Collaborative work from @doowb and @jonschlinkert
 

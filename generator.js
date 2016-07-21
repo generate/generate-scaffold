@@ -3,18 +3,18 @@
 var scaffold = require('./');
 
 module.exports = function(app) {
-  app.use(scaffold());
+  app.use(scaffold);
 
   // create a scaffold:
   // - registers a sub-generator named "one"
   // - creates a `default` task on `one`
   this.scaffold('one', {
     src: ['*.*'],
-    dest: 'one'
+    dest: 'test/actual/one'
   });
 
   // register a sub-generator named "abc"
-  app.register('abc', function() {
+  app.generator('abc', function() {
     // create a scaffold name "local":
     // - registers a sub-generator on "abc" named "local"
     // - adds 2 tasks named "docs" and "site"
@@ -24,19 +24,20 @@ module.exports = function(app) {
         files: {
           options: {dot: true},
           src: ['*.*'],
-          dest: 'docs'
+          dest: 'test/actual/docs'
         }
       },
       site: {
         files: {
           src: ['*.*'],
-          dest: 'site'
+          dest: 'test/actual/site'
         }
       }
     });
   });
 
   app.task('default', function(cb) {
+    console.log(app)
     app.generate(['one', 'abc.local'], cb);
   });
 };

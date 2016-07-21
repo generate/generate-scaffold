@@ -6,6 +6,7 @@ var path = require('path');
 var assert = require('assert');
 var rimraf = require('rimraf');
 var through = require('through2');
+var existsSync = require('fs-exists-sync')
 var Scaffold = require('scaffold');
 var plugin = require('../')
 var App = require('base-app');
@@ -19,11 +20,7 @@ function dest(name) {
 }
 
 function exists(name) {
-  try {
-    fs.statSync(dest(name));
-    return true;
-  } catch (err) {}
-  return false;
+  return existsSync(dest(name));
 }
 
 function base(cb) {

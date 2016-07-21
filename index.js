@@ -41,44 +41,8 @@ module.exports = function fn(app) {
    * Decorate scaffolds with methods for generating files
    */
 
-  if (this.options.scaffoldTasks !== false) {
-    this.on('target', function(target) {
-      var scaffold = target.parent || self;
-      var tasks = [];
-
-      if (this.Scaffold.isScaffold(scaffold) && scaffold.name) {
-        var gen = self.getGenerator(scaffold.name);
-        if (typeof gen !== 'undefined') {
-          gen.task(target.name, function(cb) {
-            self.each(target, cb);
-          });
-        } else {
-          self.generator(scaffold.name, function() {
-            this.task(target.name, function(cb) {
-              self.each(target, cb);
-            });
-          });
-          gen = self.generators[scaffold.name];
-        }
-
-        if (gen) {
-          tasks = Object.keys(gen.tasks).filter(function(task) {
-            return task !== 'default';
-          });
-          gen.task('default', tasks);
-        }
-      } else if (target.name) {
-        self.task(target.name, function(cb) {
-          self.each(target, cb);
-        });
-
-        tasks = Object.keys(self.tasks).filter(function(task) {
-          return task !== 'default';
-        });
-
-        self.task('default', tasks);
-      }
-    });
+  if (typeof this.generator === 'function' && this.options.scaffoldTasks !== false) {
+    scaffoldTasks(app);
   }
 
   /**
@@ -86,6 +50,7 @@ module.exports = function fn(app) {
    */
 
   this.define({
+    scaffoldTasks: scaffoldTasks,
 
     /**
      * Asynchronously generate files from a declarative [scaffold][] configuration.
@@ -193,7 +158,9 @@ module.exports = function fn(app) {
       var stream = utils.ms.apply(utils.ms, streams);
       stream.on('finish', stream.emit.bind(stream, 'end'));
       return stream;
-    }
+    },
+
+    decorateScaffold: decorate
   });
 
   return fn;
@@ -204,6 +171,7 @@ module.exports = function fn(app) {
  */
 
 function decorate(app, scaffold) {
+  if (!utils.isValid(scaffold, 'decorate-scaffold', ['scaffold'])) return;
   if (typeof scaffold.generate === 'function') return;
 
   scaffold.define('generate', function(options, cb) {
@@ -227,5 +195,45 @@ function decorate(app, scaffold) {
     var args = [].slice.call(arguments);
     args.unshift(this);
     return app.scaffoldStream.apply(app, args);
+  });
+}
+
+function scaffoldTasks(app) {
+  app.on('target', function(target) {
+    var scaffold = target.parent || app;
+    var tasks = [];
+
+    if (app.Scaffold.isScaffold(scaffold) && scaffold.name) {
+      var gen = app.getGenerator(scaffold.name);
+      if (typeof gen !== 'undefined') {
+        gen.task(target.name, function(cb) {
+          app.each(target, cb);
+        });
+      } else {
+        app.generator(scaffold.name, function() {
+          app.task(target.name, function(cb) {
+            app.each(target, cb);
+          });
+        });
+        gen = app.generators[scaffold.name];
+      }
+
+      if (gen) {
+        tasks = Object.keys(gen.tasks).filter(function(task) {
+          return task !== 'default';
+        });
+        gen.task('default', tasks);
+      }
+    } else if (target.name) {
+      app.task(target.name, function(cb) {
+        app.each(target, cb);
+      });
+
+      tasks = Object.keys(app.tasks).filter(function(task) {
+        return task !== 'default';
+      });
+
+      app.task('default', tasks);
+    }
   });
 }

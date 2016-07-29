@@ -1,43 +1,84 @@
 'use strict';
 
+var isValid = require('is-valid-app');
 var scaffold = require('./');
 
 module.exports = function(app) {
-  app.use(scaffold);
+  if (!isValid(this, 'generate-scaffold-example')) return;
+  this.use(scaffold);
 
-  // create a scaffold:
-  // - registers a sub-generator named "one"
-  // - creates a `default` task on `one`
-  this.scaffold('one', {
-    src: ['*.*'],
-    dest: 'test/actual/one'
-  });
+  this.register('aaa', function(aaa) {
+    if (!isValid(this, 'example-aaa')) return;
 
-  // register a sub-generator named "abc"
-  app.generator('abc', function() {
-    // create a scaffold name "local":
-    // - registers a sub-generator on "abc" named "local"
-    // - adds 2 tasks named "docs" and "site"
-    // - registers a "default" task with the other 2 tasks as dependencies
-    this.scaffold('local', {
+    this.scaffold({
+      options: { destBase: 'test/actual' },
       docs: {
         files: {
           options: {dot: true},
-          src: ['*.*'],
-          dest: 'test/actual/docs'
+          src: ['test/fixtures/*.*'],
+          dest: 'docs'
         }
       },
       site: {
         files: {
-          src: ['*.*'],
-          dest: 'test/actual/site'
+          src: ['test/fixtures/*.*'],
+          dest: 'site'
         }
       }
     });
   });
 
-  app.task('default', function(cb) {
-    console.log(app)
-    app.generate(['one', 'abc.local'], cb);
+  this.register('xyz', function(xyz) {
+    if (!isValid(this, 'example-xyz')) return;
+
+    var scaffold = this.scaffold('bar', {
+      options: { destBase: 'test/actual' },
+      docs: {
+        files: {
+          options: {dot: true},
+          src: ['test/fixtures/*.*'],
+          dest: 'docs'
+        }
+      },
+      site: {
+        files: {
+          src: ['test/fixtures/*.*'],
+          dest: 'site'
+        }
+      }
+    });
+  });
+
+  this.register('one', function(one) {
+    if (!isValid(this, 'example-one')) return;
+
+    this.register('abc', function(abc) {
+      if (!isValid(this, 'example-abc')) return;
+
+      var scaffold = this.scaffold('foo', {
+        options: { destBase: 'test/actual' },
+        docs: {
+          files: {
+            options: {dot: true},
+            src: ['test/fixtures/*.*'],
+            dest: 'docs'
+          }
+        },
+        site: {
+          files: {
+            src: ['test/fixtures/*.*'],
+            dest: 'site'
+          }
+        }
+      });
+    });
+
+    one.task('default', {silent: true}, function(cb) {
+      one.generate('abc', cb);
+    });
+  });
+
+  this.task('default', {silent: true}, function(cb) {
+    app.generate('one.abc', cb);
   });
 };

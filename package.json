@@ -1,7 +1,7 @@
 {
   "name": "generate-scaffold",
   "description": "Generate a scaffold from a declarative configuration.",
-  "version": "0.3.1",
+  "version": "0.4.0",
   "homepage": "https://github.com/generate/generate-scaffold",
   "author": "Jon Schlinkert (https://github.com/jonschlinkert)",
   "repository": "generate/generate-scaffold",
@@ -92,11 +92,11 @@
       "gulp-format-md"
     ],
     "reflinks": [
+      "generate",
       "scaffold",
       "verb",
-      "verb-readme-generator",
-      "generate",
-      "verb-generate-readme"
+      "verb-generate-readme",
+      "verb-readme-generator"
     ],
     "lint": {
       "reflinks": true

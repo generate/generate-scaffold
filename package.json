@@ -29,6 +29,7 @@
     "base-scaffold": "^0.3.1",
     "debug": "^2.2.0",
     "for-own": "^0.1.4",
+    "generate-target": "^0.1.1",
     "is-scaffold": "^0.1.1",
     "is-valid-app": "^0.2.0",
     "lazy-cache": "^2.0.1",

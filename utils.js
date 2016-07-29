@@ -9,6 +9,7 @@ require = utils;
  */
 
 require('base-scaffold', 'scaffold');
+require('generate-target', 'target');
 require('async-each-series', 'eachSeries');
 require('base-files-each', 'each');
 require('is-scaffold');
